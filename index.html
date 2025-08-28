@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>聖地巡礼マップ</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#343a40">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/t-flick-keyboard@1/dist/css/style.min.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="ad-screen">
+        <video id="ad-video" src="https://firebasestorage.googleapis.com/v0/b/pilgrimage-quest-app.firebasestorage.app/o/ad_01.mp4?alt=media&token=151f3a81-c21d-4b3d-b4af-42796216473c" autoplay playsinline></video>
+        <div class="touch-prompt">画面をタッチしてください</div>
+    </div>
+
+    <div id="main-content" class="hidden">
+        <div id="map"></div>
+        <div id="app">
+            <div class="language-selector-container">
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        言語選択
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#">日本語</a></li>
+                        <li><a class="dropdown-item" href="#">English</a></li>
+                        <li><a class="dropdown-item" href="#">中文</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <button id="back-to-ad-btn" class="btn btn-dark" v-show="!isEventDetailVisible && !isQuestDetailVisible" @click="handleBackToAdClick">広告に戻る</button>
+
+            <div class="sidebar vh-100">
+                <div class="list-group overflow-auto">
+                    <div v-if="header" class="list-header">
+                        <img v-if="header.image" :src="header.image" alt="" class="header-image">
+                        <div class="header-text">
+                            <h5 class="header-title">{{ header.title }}</h5>
+                            <p class="header-description" :class="{ 'expanded': isHeaderExpanded }">
+                                {{ header.description }}
+                            </p>
+                            <button v-if="!isHeaderExpanded" @click="isHeaderExpanded = true" class="read-more-btn">
+                                続きを読む
+                            </button>
+                            <button v-else @click="isHeaderExpanded = false" class="read-more-btn">
+                                閉じる
+                            </button>
+                        </div>
+                        
+                        <div class="d-grid gap-2 p-2">
+                            <button class="btn btn-info" @click="showAuthModal">
+                                ★ スマホと連携する
+                            </button>
+                             <div v-if="currentUser" class="alert alert-success mt-2 text-center">
+                                連携中: <span class="auth-modal-user-info">{{ currentUser.userId.substring(0, 8) }}...</span>
+                            </div>
+                            
+                            <button class="btn btn-warning" @click="showRewardModal">
+                                🎁 景品交換 (コード入力)
+                            </button>
+                        </div>
+                    </div>
+
+                    <a href="#" class="list-group-item list-group-item-action"
+                       v-for="spot in spots"
+                       :key="spot.name"
+                       @click.prevent="onSpotClick(spot.name)">
+                        <div class="list-item-content">
+                            <div class="list-item-name">{{ spot.name }}</div>
+                            <img v-if="spot.image" :src="spot.image" alt="" class="list-item-image">
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <transition name="slide">
+                <div v-if="isEventDetailVisible" class="event-detail-overlay">
+                    <div class="event-detail-header">
+                        <h2 class="event-detail-spot-title">{{ currentSpotForEvents.name }}</h2>
+                        <button @click="hideEventDetail" class="back-to-map-btn">戻る</button>
+                    </div>
+                    <div class="event-detail-content">
+                        <div v-if="currentSpotEvents.length > 0">
+                            <div v-for="(event, index) in currentSpotEvents" :key="event.name" class="event-item">
+                                <div class="event-text-content">
+                                    <h3>{{ event.name }}</h3>
+                                    <template v-if="event.image">
+                                        <video v-if="event.image.endsWith('.mp4')"
+                                               :ref="'eventVideo_' + index"
+                                               :data-ref-name="'eventVideo_' + index"
+                                               :src="event.image"
+                                               class="event-video"
+                                               autoplay loop playsinline>
+                                        </video>
+                                        <img v-else
+                                             :src="event.image"
+                                             alt=""
+                                             class="event-image">
+                                    </template>
+                                    <p><strong>開催日時:</strong> {{ event.datetime }}</p>
+                                    <p><strong>場所:</strong> {{ event.location }}</p>
+                                    <p><strong>詳細:</strong> {{ event.description }}</p>
+                                    <p><strong>景品:</strong> {{ event.prize }}</p>
+                                </div>
+                                <button v-if="event.qrcode" @click="showQrCode(event.qrcode, 'アプリで読み込んでイベントに参加しよう！')" class="join-event-btn">
+                                    参加する
+                                </button>
+                            </div>
+                        </div>
+                        <div v-else class="no-event-message">
+                            <p>現在参加可能なイベントはありません。</p>
+                        </div>
+                    </div>
+                </div>
+            </transition>
+
+            <transition name="slide">
+                <div v-if="isQuestDetailVisible" class="event-detail-overlay">
+                    <div class="event-detail-header">
+                        <h2 class="event-detail-spot-title">クエスト詳細</h2>
+                        <button @click="hideQuestDetail" class="back-to-map-btn">戻る</button>
+                    </div>
+                    <div v-if="currentQuestForDetail" class="event-detail-content">
+                        <div class="event-item">
+                            <h3>{{ currentQuestForDetail.title }}</h3>
+                            <img :src="currentQuestForDetail.image" alt="" class="event-image">
+                            <p><strong>＜クエスト説明＞</strong><br>{{ currentQuestForDetail.description }}</p>
+                            <p><strong>＜クリア条件＞</strong><br>{{ currentQuestForDetail.clearCondition }}</p>
+
+                            <div class="text-center mt-4">
+                                <p><strong>↓スマホで読み込んでクエスト開始↓</strong></p>
+                                <img :src="currentQuestForDetail.qrCodeUrl" class="quest-qr-image" alt="クエスト受注用QRコード">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </transition>
+
+            <transition name="fade">
+                <div v-if="isQrModalVisible" class="qr-modal-overlay" @click="hideQrCode">
+                    <div class="qr-modal-content" @click.stop>
+                        <img :src="currentQrCode" alt="QR Code">
+                        <p class="qr-modal-caption">{{ qrModalCaption }}</p>
+                    </div>
+                </div>
+            </transition>
+            
+            <transition name="fade">
+                <div v-if="isPurchaseModalVisible" class="custom-modal-overlay" @click="hidePurchaseModal">
+                    <div class="custom-modal-content" @click.stop>
+                        <h4 class="custom-modal-title">購入方法を選択</h4>
+                        <p v-if="modalTargetSpot" class="custom-modal-description">
+                            商品: {{ modalTargetSpot.goods_name }}
+                        </p>
+                        <div class="custom-modal-buttons">
+                            <button class="btn btn-primary" @click="openLink(modalTargetSpot.normal_purchase_url)">通常購入</button>
+                            <button class="btn btn-success" @click="openLink(modalTargetSpot.furusato_purchase_url)">ふるさと納税で購入</button>
+                        </div>
+                        <button class="custom-modal-close-btn" @click="hidePurchaseModal">閉じる</button>
+                    </div>
+                </div>
+            </transition>
+
+            <transition name="fade">
+                <div v-if="isLodgingModalVisible" class="custom-modal-overlay" @click="hideLodgingModal">
+                    <div class="custom-modal-content" @click.stop>
+                        <h4 class="custom-modal-title" v-if="modalTargetSpot">{{ modalTargetSpot.name }}</h4>
+                        
+                        <div v-if="!selectedLodgingPlan">
+                            <h5 class="custom-modal-subtitle">宿泊プランを選択してください</h5>
+                            <ul class="list-group">
+                                <li v-for="plan in modalTargetSpot.lodging_plans" 
+                                    class="list-group-item list-group-item-action"
+                                    @click="selectLodgingPlan(plan)">
+                                    <strong>{{ plan.name }}</strong><br>
+                                    <span>料金: {{ plan.price }}</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div v-else>
+                             <h5 class="custom-modal-subtitle">お支払い方法を選択</h5>
+                             <p class="custom-modal-description">
+                                 選択中のプラン: <strong>{{ selectedLodgingPlan.name }}</strong>
+                             </p>
+                             <div class="custom-modal-buttons">
+                                <button class="btn btn-primary" @click="openLink(modalTargetSpot.normal_payment_url)">通常支払</button>
+                                <button class="btn btn-success" @click="openLink(modalTargetSpot.furusato_payment_url)">ふるさと納税で支払</button>
+                             </div>
+                             <button class="btn btn-link mt-3" @click="selectedLodgingPlan = null">← プラン選択に戻る</button>
+                        </div>
+
+                        <button class="custom-modal-close-btn" @click="hideLodgingModal">閉じる</button>
+                    </div>
+                </div>
+            </transition>
+
+            <transition name="fade">
+                <div v-if="isAuthModalVisible" class="custom-modal-overlay" @click="hideAuthModal">
+                    <div class="custom-modal-content auth-modal-content" @click.stop>
+                         <button class="custom-modal-close-btn" @click="hideAuthModal"></button>
+                        <h4 class="custom-modal-title">スマホと連携</h4>
+                        <p class="custom-modal-description">
+                            スマホアプリで発行された6桁の合言葉を入力してください。
+                        </p>
+                        
+                        <input type="text" class="form-control auth-modal-input" v-model="enteredAuthToken" maxlength="6">
+                        
+                        <div class="d-grid">
+                            <button class="btn btn-primary btn-lg" @click="loginWithAuthToken" :disabled="isTokenLoading">
+                                <span v-if="isTokenLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                連携する
+                            </button>
+                        </div>
+                        <div v-if="authErrorMessage" class="mt-3 alert alert-danger">
+                            {{ authErrorMessage }}
+                        </div>
+                    </div>
+                </div>
+            </transition>
+
+            <transition name="fade">
+                <div v-if="isRewardModalVisible" class="custom-modal-overlay" @click="hideRewardModal">
+                    <div class="custom-modal-content auth-modal-content" @click.stop>
+                         <button class="custom-modal-close-btn" @click="hideRewardModal"></button>
+                        <h4 class="custom-modal-title">景品交換</h4>
+                        <p class="custom-modal-description">
+                            スマホに表示された6桁の報酬コードを入力してください。
+                        </p>
+                        <input type="text" class="form-control auth-modal-input" v-model="enteredRewardCode" maxlength="6">
+                        <div class="d-grid">
+                            <button class="btn btn-danger btn-lg" @click="redeemRewardCode" :disabled="isTokenLoading">
+                                <span v-if="isTokenLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                景品と交換する
+                            </button>
+                        </div>
+                        <div v-if="rewardErrorMessage" class="mt-3 alert alert-danger">
+                            {{ rewardErrorMessage }}
+                        </div>
+                    </div>
+                </div>
+            </transition>
+
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyACAVYO9bza32V-dYFaiRafHn8owtIw3eg&callback=initMap" defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore-compat.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js').then(registration => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }).catch(err => {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
+    </script>
+    </body>
+</html>

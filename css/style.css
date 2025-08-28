@@ -1,0 +1,679 @@
+/* このファイルに独自のスタイルを追加していきます */
+
+/* ページの基本設定 */
+body {
+    overflow: hidden;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* 広告スクリーン */
+#ad-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    cursor: pointer;
+    z-index: 1000;
+    background-color: #000;
+}
+#ad-video {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+.touch-prompt {
+    position: absolute;
+    bottom: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 2rem;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 10px 20px;
+    border-radius: 10px;
+    animation: blink 2s infinite;
+}
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+
+/* Vueアプリのコンテナをサイドバーのみに限定 */
+#app {
+    position: relative;
+    z-index: 10;
+    pointer-events: none;
+}
+
+/* 地図を画面全体の背景として配置 */
+#map {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+/* サイドバー */
+.sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 33.3333%;
+    max-width: 350px;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.678);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    border-right: 1px solid rgba(0, 0, 0, 0);
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.3s ease-in-out;
+}
+.sidebar.collapsed {
+    transform: translateX(-100%);
+}
+
+/* サイドバー開閉ボタン */
+.sidebar-toggle-btn {
+    position: absolute;
+    top: 15%;
+    left: 100%;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 100px;
+    background-color: rgba(0, 0, 0, 0.192);
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-left: none;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+    color: #000000;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 0.7rem;
+    z-index: 11;
+    pointer-events: auto;
+}
+
+
+/* ヘッダーエリア */
+.list-header {
+    flex-shrink: 0;
+    padding: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.486);
+}
+.header-image {
+    width: 95%;
+    height: auto;
+    object-fit: contain;
+    border-radius: 8px;
+    display: block;
+    margin: 0 auto;
+}
+.header-text {
+    padding: 0.5rem;
+}
+.header-title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+}
+.header-description {
+    font-size: 1rem;
+    color: #ffffff;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    overflow: hidden;
+    transition: all 0.3s ease-in-out;
+}
+.header-description.expanded {
+    -webkit-line-clamp: unset;
+}
+.read-more-btn {
+    background: none;
+    border: none;
+    color: #ffffff;
+    font-weight: bold;
+    padding: 0;
+    margin-top: 8px;
+    cursor: pointer;
+}
+
+/* 検索フォームのコンテナ */
+.search-container {
+    padding: 0.5rem;
+    flex-shrink: 0;
+}
+.search-input {
+    background-color: rgba(255, 255, 255, 0.6);
+    border: 1px solid #fff;
+}
+
+/* リスト項目全体のスタイル */
+.sidebar .list-group {
+    padding: 0 0.5rem 0.5rem 0.5rem;
+    flex-grow: 1;
+}
+
+/* リストの各項目のスタイル */
+.sidebar .list-group-item {
+    background-color: rgba(255, 255, 255, 0.178);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.363);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    transition: all 0.2s ease-in-out;
+}
+
+.list-item-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+}
+
+.list-item-image {
+    width: 100%;
+    max-height: 150px;
+    border-radius: 6px;
+    object-fit: contain;
+    margin-top: 8px;
+}
+
+.list-item-name {
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+
+.list-item-comment {
+    font-size: 1rem;
+    color: #ffffff;
+    margin-top: 4px;
+}
+
+.sidebar .list-group-item-action:hover,
+.sidebar .list-group-item-action:focus,
+.sidebar .list-group-item-action:active {
+    background-color: rgba(0, 0, 0, 0.219);
+    color: #ffffff;
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.04);
+}
+
+.vh-100 {
+    height: 100vh;
+}
+
+.overflow-auto {
+    overflow-y: auto;
+}
+
+/* サイドバーのスクロールバー */
+.overflow-auto::-webkit-scrollbar {
+    width: 0px;
+}
+.overflow-auto::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+.overflow-auto::-webkit-scrollbar-thumb {
+    background: rgba(158, 158, 158, 0.747);
+    border-radius: 4px;
+    transition: background 0.2s ease-in-out;
+}
+.overflow-auto::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.6);
+}
+
+/* 情報ウィンドウの全体的な設定 */
+.info-window {
+    width: 450px;
+    max-height: 50vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* 情報ウィンドウのヘッダー（スポット名）の固定設定 */
+.info-window-header {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0%;
+    background-color: rgba(255, 255, 255, 0.3);
+    color: #111;
+    padding: 12px 0;
+    margin: 0 -15px 0 -15px;
+    padding-left: 15px;
+    padding-right: 15px;
+    z-index: 10;
+    text-align: center;
+    font-weight: bold;
+}
+
+/* 詳細ウィンドウのタイトルのフォントサイズ */
+.info-window-header {
+    font-size: 1.5rem;
+}
+
+/* 情報ウィンドウのスクロール可能コンテンツ */
+.info-window-content {
+    padding: 0 15px 15px 15px;
+}
+
+.info-window-spot-image {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+.info-window-goods {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background-color: rgba(0,0,0,0.05);
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+}
+.info-window-goods-image {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+.info-window-goods-details {
+    display: flex;
+    flex-direction: column;
+}
+.info-window-goods-details strong {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+.info-window-goods-details span {
+    font-size: 1.1rem;
+    color: #333;
+}
+.info-window-btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: rgb(255, 255, 255);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: opacity 0.2s;
+}
+.info-window-btn:hover {
+    opacity: 0.9;
+}
+.info-window-btn.purchase {
+    background-color: #dc3545;
+}
+.info-window-btn.lodging {
+    background-color: #0d6efd;
+}
+
+.info-window-btn.start-quest-btn {
+    background-color: #0dcaf0;
+}
+
+
+.info-window hr {
+    margin: 12px 0;
+    border-color: rgba(0,0,0,0.1);
+}
+.goods-section {
+}
+.goods-image {
+    width: 100%;
+    height: auto;
+    margin-bottom: 8px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+.goods-info strong {
+    font-size: 1.5rem;
+    color: #222;
+}
+.goods-info span {
+    font-size: 1.1rem;
+    color: #555;
+    display: block;
+    margin-bottom: 4px;
+}
+.goods-info p {
+    font-size: 1rem;
+    color: #666;
+    margin: 0;
+}
+
+/* イベント参加ボタン */
+.event-btn {
+    width: 100%;
+    padding: 15px;
+    margin-top: 12px;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+.event-btn:hover {
+    background-color: #5a6268;
+}
+
+/* イベント詳細画面 */
+.event-detail-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    z-index: 2000;
+    display: flex;
+    flex-direction: column;
+    pointer-events: auto;
+}
+.slide-enter-active,
+.slide-leave-active {
+    transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+.slide-enter-from,
+.slide-leave-to {
+    transform: translateX(100%);
+}
+.event-detail-header {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid #dee2e6;
+    background-color: rgba(255, 255, 255, 0.7);
+}
+.event-detail-spot-title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #333;
+}
+.back-to-map-btn {
+    font-size: 1.5rem;
+    padding: 0.5rem 1rem;
+    background-color: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.event-detail-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+}
+.event-item {
+    background-color: rgba(248, 249, 250, 0.9);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+.event-text-content {
+    flex-grow: 1;
+}
+.event-item h3 {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #222;
+    border-bottom: 2px solid #0d6efd;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+.event-item p {
+    color: #444;
+    line-height: 1.6;
+    font-size: 1.5rem;
+}
+.event-item p strong {
+    color: #000;
+}
+.no-event-message {
+    text-align: center;
+    color: #666;
+    padding-top: 2rem;
+}
+.event-image {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    border-radius: 6px;
+    margin: 0.5rem 0;
+}
+.event-video {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    border-radius: 6px;
+    margin: 0.5rem 0;
+}
+.join-event-btn {
+    background-color: #198754;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 12px 24px;
+    cursor: pointer;
+    font-weight: bold;
+    display: block;
+    margin: 1rem auto 0;
+}
+.join-event-btn:hover {
+    background-color: #157347;
+}
+
+.qr-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+    pointer-events: auto;
+}
+.fade-enter-active, .fade-leave-active {
+    transition: opacity 0.3s ease-in-out;
+}
+.fade-enter-from, .fade-leave-to {
+    opacity: 0;
+}
+.qr-modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+}
+.qr-modal-content img {
+    max-width: 80vw;
+    max-height: 60vh;
+}
+.qr-modal-caption {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #333;
+    margin-top: 1rem;
+}
+
+/* Google Mapのデフォルトスタイル調整 */
+.gm-style-iw-d {
+   overflow: hidden !important;
+   background-color: transparent !important;
+}
+
+.gm-style-iw-c {
+    padding: 0 !important;
+    background: rgba(255, 255, 255, 0.5) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
+
+.gm-ui-hover-effect {
+    background-color: transparent !important;
+}
+
+/* 広告画面に戻るボタン */
+#back-to-ad-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 15;
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-weight: bold;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.596);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+#back-to-ad-btn:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+    transform: scale(1.05);
+}
+
+/* 言語選択のドロップダウン */
+.language-selector-container {
+    position: absolute;
+    top: 20px;
+    right: 180px;
+    z-index: 15;
+    pointer-events: auto;
+}
+
+/* 購入・宿泊モーダルのスタイル */
+.custom-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 4000;
+    pointer-events: auto;
+}
+.custom-modal-content {
+    background-color: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    text-align: center;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+.custom-modal-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+.custom-modal-subtitle {
+    font-size: 1.2rem;
+    margin-top: 20px;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+.custom-modal-description {
+    font-size: 1.1rem;
+    color: #555;
+    margin-bottom: 20px;
+}
+.custom-modal-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+.custom-modal-buttons .btn {
+    padding: 10px 25px;
+    font-size: 1.1rem;
+}
+.custom-modal-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    line-height: 1;
+    color: #888;
+    cursor: pointer;
+}
+.custom-modal-close-btn::before {
+    content: '×';
+}
+.custom-modal-content .list-group-item {
+    cursor: pointer;
+}
+
+/* 認証モーダルのスタイル */
+.auth-modal-content {
+    width: 90%;
+    max-width: 400px;
+}
+.auth-modal-input {
+    text-align: center;
+    font-size: 2rem;
+    letter-spacing: 0.5rem;
+    font-family: monospace;
+    margin-bottom: 1.5rem;
+}
+.auth-modal-user-info {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+.info-window-spot-details {
+    font-size: 0.9rem;
+    margin: 10px 0;
+    text-align: left;
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+}
+.info-window-spot-details p {
+    margin-bottom: 5px;
+}
+
+.quest-qr-image {
+    max-width: 250px;
+    margin: 0 auto;
+    display: block;
+}
