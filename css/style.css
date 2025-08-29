@@ -170,7 +170,7 @@ body {
 /* リストの各項目のスタイル */
 .sidebar .list-group-item {
     background-color: rgba(255, 255, 255, 0.178);
-    color: #ffffff;
+    color: #ff0000;
     border: 1px solid rgba(255, 255, 255, 0.363);
     border-radius: 8px;
     margin-bottom: 8px;
