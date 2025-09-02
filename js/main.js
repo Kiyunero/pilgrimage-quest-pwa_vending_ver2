@@ -130,8 +130,8 @@ function initMap() {
         },
         mounted() {
             this.map = new google.maps.Map(document.getElementById('map'), {
-                center: { lat: 35.7100, lng: 139.8107 },
-                zoom: 14,
+                center: { lat: 36.39168771404707, lng: 139.06995217545418 },
+                zoom: 17,
                 gestureHandling: 'greedy',
             });
 
@@ -209,7 +209,7 @@ function initMap() {
                         title: spot.name,
                         icon: {
                             path: google.maps.SymbolPath.CIRCLE,
-                            scale: 8,
+                            scale: 12,
                             fillColor: pinColor,
                             fillOpacity: 1,
                             strokeWeight: 1,
@@ -284,7 +284,13 @@ function initMap() {
                 const duration = 1500;
                 let startTime = null;
                 const p0 = { lat: this.map.getCenter().lat(), lng: this.map.getCenter().lng(), zoom: this.map.getZoom() };
-                const p2 = { lat: destination.lat(), lng: destination.lng(), zoom: endZoom };
+                const offsetLng = -0.0008; // この数値を調整して左右の位置を決めます
+                const offsetLat = 0.0015;    // 上下の位置 (プラスで上へ)
+                const p2 = { 
+                    lat: destination.lat() + offsetLat, 
+                    lng: destination.lng() + offsetLng, 
+                    zoom: endZoom 
+                };
                 
                 const frame = (currentTime) => {
                     if (!startTime) startTime = currentTime;
