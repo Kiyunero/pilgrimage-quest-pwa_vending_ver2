@@ -39,9 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
         adVideo.play();
     });
     adVideo.src = adVideos[0];
-    // videoの自動再生エラーに対応するため、muted属性をHTML側で追加済み
-    // adVideo.play().catch(e => console.error("Initial video play failed:", e));
-
 
     let inactivityTimer;
     const inactivityTimeout = 90000; // 90秒
@@ -237,6 +234,8 @@ function initMap() {
                     if (spot.questId) {
                         questButtonHtml = `<button class="info-window-btn start-quest-btn" data-quest-id="${spot.questId}">クエストを受注する</button>`;
                     }
+                    
+                    // ▼▼▼ この関数を修正 ▼▼▼
                     const infoWindow = new google.maps.InfoWindow({
                         content: `
                             <div class="info-window">
@@ -250,7 +249,8 @@ function initMap() {
                                     <button class="event-btn" data-spot-name="${spot.name}">周辺のイベント情報はこちら</button>
                                 </div>
                             </div>
-                        `
+                        `,
+                        disableAutoPan: true // ★★★★★ これが最重要ポイントです！ ★★★★★
                     });
 
                     marker.addListener('click', (e) => {
@@ -260,12 +260,14 @@ function initMap() {
                     this.markers.push({ gmapMarker: marker, infoWindow: infoWindow, spotData: spot });
                 });
             },
+            // ▼▼▼ この関数を修正 ▼▼▼
             onSpotClick(spotName) {
                 if (this.isAnimating) {
                     cancelAnimationFrame(this.animationFrameId);
                 }
                 const target = this.markers.find(m => m.spotData.name === spotName);
                 if (target) {
+                    // ★★★★★ 瞬時にInfoWindowを開きます ★★★★★
                     this.openInfoWindow(target.infoWindow, target.gmapMarker);
                     const destination = target.gmapMarker.getPosition();
                     this.flyTo(destination, 17.5);
@@ -279,38 +281,75 @@ function initMap() {
                 this.activeInfoWindow = infoWindow;
             },
             easing(t) { return t === 1 ? 1 : 1 - Math.pow(2, -10 * t); },
-            flyTo(destination, endZoom) {
+            
+            // ▼▼▼ この関数を修正 ▼▼▼
+            flyTo(destination, endZoom) { // 引数からinfoWindowとmarkerを削除
                 this.isAnimating = true;
-                const duration = 1500;
+                const duration = 4000;
                 let startTime = null;
-                const p0 = { lat: this.map.getCenter().lat(), lng: this.map.getCenter().lng(), zoom: this.map.getZoom() };
-                const offsetLng = -0.0008; // この数値を調整して左右の位置を決めます
-                const offsetLat = 0.0015;    // 上下の位置 (プラスで上へ)
-                const p2 = { 
-                    lat: destination.lat() + offsetLat, 
-                    lng: destination.lng() + offsetLng, 
-                    zoom: endZoom 
-                };
+
+                const projection = this.map.getProjection();
+                if (!projection) {
+                    this.map.moveCamera({ center: destination, zoom: endZoom });
+                    this.isAnimating = false;
+                    return;
+                }
+                const destPoint = projection.fromLatLngToPoint(destination);
+                const scale = Math.pow(2, endZoom);
                 
+                const offsetX = 150;
+                const offsetY = 250;
+
+                const offsetPoint = new google.maps.Point(offsetX / scale, offsetY / scale);
+                const newCenterPoint = new google.maps.Point(destPoint.x - offsetPoint.x, destPoint.y - offsetPoint.y);
+                const newCenterLatLng = projection.fromPointToLatLng(newCenterPoint);
+
+                const p0 = {
+                    lat: this.map.getCenter().lat(),
+                    lng: this.map.getCenter().lng(),
+                    zoom: this.map.getZoom()
+                };
+                const p2 = {
+                    lat: newCenterLatLng.lat(),
+                    lng: newCenterLatLng.lng(),
+                    zoom: endZoom
+                };
+
+                const distance = Math.sqrt(Math.pow(p2.lat - p0.lat, 2) + Math.pow(p2.lng - p0.lng, 2));
+                const arcHeight = Math.max(0.5, Math.min(distance * 0, 0.1));
+
+                const p1 = {
+                    lat: (p0.lat + p2.lat) / 2,
+                    lng: (p0.lng + p2.lng) / 2,
+                    zoom: Math.min(p0.zoom, p2.zoom) - arcHeight
+                };
+
                 const frame = (currentTime) => {
                     if (!startTime) startTime = currentTime;
                     const progress = Math.min((currentTime - startTime) / duration, 1);
                     const t = this.easing(progress);
 
-                    const currentLat = (1 - t) * p0.lat + t * p2.lat;
-                    const currentLng = (1 - t) * p0.lng + t * p2.lng;
-                    const currentZoom = (1 - t) * p0.zoom + t * p2.zoom;
+                    const currentLat = Math.pow(1 - t, 2) * p0.lat + 2 * (1 - t) * t * p1.lat + Math.pow(t, 2) * p2.lat;
+                    const currentLng = Math.pow(1 - t, 2) * p0.lng + 2 * (1 - t) * t * p1.lng + Math.pow(t, 2) * p2.lng;
+                    const currentZoom = Math.pow(1 - t, 2) * p0.zoom + 2 * (1 - t) * t * p1.zoom + Math.pow(t, 2) * p2.zoom;
 
-                    this.map.moveCamera({ center: { lat: currentLat, lng: currentLng }, zoom: currentZoom });
+                    this.map.moveCamera({
+                        center: { lat: currentLat, lng: currentLng },
+                        zoom: currentZoom
+                    });
 
                     if (progress < 1) {
                         this.animationFrameId = requestAnimationFrame(frame);
                     } else {
                         this.isAnimating = false;
+                        this.animationFrameId = null;
+                        // ★★★★★ ここにあったInfoWindowを開く処理は削除します ★★★★★
                     }
                 };
                 this.animationFrameId = requestAnimationFrame(frame);
             },
+            
+            // (以降のメソッドは変更なし)
             fadeVolume(refName, element, targetVolume, duration = 500) {
                 if (!element) return;
                 if (this.activeVideoFades[refName]) {
